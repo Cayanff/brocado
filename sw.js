@@ -1,0 +1,2 @@
+self.addEventListener('install',e=>{e.waitUntil(caches.open('brocado-v1').then(c=>c.addAll(['./','index.html','style.css','script.js','icon.svg'])));self.skipWaiting()});
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const k=r.clone();caches.open('brocado-v1').then(c=>c.put(e.request,k));return r}).catch(()=>caches.match(e.request)))});
