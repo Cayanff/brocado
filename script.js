@@ -5,7 +5,7 @@ const CONFIG = {
   nome: "BROCADO",
   whatsapp: "5599985583929",      // ← SEU NÚMERO: 55 + DDD + número, só dígitos
   instagram: "brocadoburgers",           // ← seu @ do Instagram, sem o @
-  painelUrl: "",                  // ← link do painel de pedidos (Apps Script). Vazio = só WhatsApp
+  painelUrl: "https://script.google.com/macros/s/AKfycbyQbfDo8D5U0Spcf4xH9Fbf4jJIR-ZqNDQrTTbWHDJucp5xLiycK4UQcntcOOH0WuJZQA/exec",                  // ← link do painel de pedidos (Apps Script). Vazio = só WhatsApp
   pedidoMinimo: 0,                // ← 0 = sem mínimo (subtotal em reais)
   taxaEntrega: 0,                 // ← taxa padrão (usada se não houver bairros)
   // Taxa por bairro. Se a lista estiver vazia, usa taxaEntrega.
