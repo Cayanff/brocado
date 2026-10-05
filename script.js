@@ -6,7 +6,7 @@ const CONFIG = {
   whatsapp: "5599985583929",      // ← SEU NÚMERO: 55 + DDD + número, só dígitos
   instagram: "brocadoburgers",           // ← seu @ do Instagram, sem o @
   painelUrl: "https://script.google.com/macros/s/AKfycbyQbfDo8D5U0Spcf4xH9Fbf4jJIR-ZqNDQrTTbWHDJucp5xLiycK4UQcntcOOH0WuJZQA/exec",                  // ← link do painel de pedidos (Apps Script). Vazio = só WhatsApp
-  pedidoMinimo: 0,                // ← 0 = sem mínimo (subtotal em reais)
+  pedidoMinimo: 15,                // ← 0 = sem mínimo (subtotal em reais)
   taxaEntrega: 0,                 // ← taxa padrão (usada se não houver bairros)
   // Taxa por bairro. Se a lista estiver vazia, usa taxaEntrega.
   bairros: [
@@ -29,7 +29,7 @@ const CONFIG = {
   },
   bloquearQuandoFechado: false,   // true = impede finalizar pedido fora do horário
   pagamentos: ["Pix", "Cartão (na entrega)", "Dinheiro"],
-  chavePix: "",                   // ← opcional: aparece na mensagem se pagamento = Pix
+  chavePix: "burgersbrocado@gmail.com",                   // ← opcional: aparece na mensagem se pagamento = Pix
   // Cupons: tipo "percent" (10 = 10%) ou "fixo" (valor em R$)
   cupons: {
     // "BROCADO10": { tipo: "percent", valor: 10 },
@@ -38,7 +38,7 @@ const CONFIG = {
 
 // Adicionais oferecidos nos itens com adicionais:true
 const ADICIONAIS = [
-  { id: "bacon",   nome: "Bacon extra",  preco: 0 },
+  { id: "molho do chefe",   nome: "molho do chefe",  preco: 0 },
   { id: "queijo",  nome: "Queijo extra", preco: 0 },
   { id: "ovo",     nome: "Ovo",          preco: 0 },
   { id: "burger",  nome: "Carne extra",  preco: 0 },
@@ -56,11 +56,11 @@ const CATEGORIAS = [
    foto: caminho da imagem (ex.: "images/x-burger.jpg"). Vazio = ícone.
    adicionais:true = abre a tela de adicionais. emBreve:true = item reservado. */
 const PRODUTOS = [
-  { id: 1,  cat: "hamburgueres", nome: "X-Burger",  desc: "Pão, hambúrguer, queijo e molho da casa.",       preco: 0, foto: "", adicionais: true },
-  { id: 2,  cat: "hamburgueres", nome: "X-Frango",  desc: "Filé de frango grelhado, queijo e salada.",       preco: 0, foto: "", adicionais: true },
-  { id: 3,  cat: "hamburgueres", nome: "X-Bacon",   desc: "Hambúrguer, bacon crocante e queijo.",            preco: 0, foto: "", adicionais: true },
-  { id: 4,  cat: "hamburgueres", nome: "X-Tudo",    desc: "Hambúrguer, bacon, ovo, presunto, queijo e salada.", preco: 0, foto: "", adicionais: true },
-  { id: 5,  cat: "hamburgueres", nome: "X-Brocado", desc: "O da casa. Descrição a definir.",                 preco: 0, foto: "", adicionais: true },
+  { id: 1,  cat: "hamburgueres", nome: "X-Burger",  desc: "Blend Bovino,queijo, alface, tomate e maionese da casa.",       preco: 14, foto: "", adicionais: true },
+  { id: 2,  cat: "hamburgueres", nome: "X-Egg",  desc: "Blend Bovino, queijo, ovo, cebola caramelizada, milho, batata palha e maionese da casa",       preco: 16, foto: "", adicionais: true },
+  { id: 3,  cat: "hamburgueres", nome: "X-Calabresa",   desc: "Blend bovino 100g, muçarela, calabresa de frango, cebola, maionese da casa.",            preco: 17, foto: "", adicionais: true },
+  { id: 4,  cat: "hamburgueres", nome: "X-Tudo",    desc: "Blend Bovino, muçarela, milho, ervilha, salada, cebola caramelizada, maionese da casa, barbecue,", preco: 19, foto: "", adicionais: true },
+  { id: 5,  cat: "hamburgueres", nome: "Brocado", desc: "blend bovino, muçarela, abacaxi grelhado, cebola roxa dourada, maionese da casa e barbecue",                 preco: 28, foto: "", adicionais: true },
 
   // COMBOS — edite nome, descrição e preço
   { id: 40, cat: "combos", nome: "Combo X-Burger", desc: "X-Burger + Batata M + refrigerante.", preco: 0, foto: "" },
