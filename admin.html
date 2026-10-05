@@ -33,8 +33,13 @@ pre{white-space:pre-wrap;font:inherit;margin:8px 0;padding:8px;border:2px dashed
   <div class="tot" id="tot"></div><div id="lista"></div>
 </div>
 <script>
+/* Preencha aqui para o painel abrir direto, sem tela de login.
+   Deixe "" nos dois para voltar a pedir link e senha toda vez. */
+const PAINEL_URL = "https://script.google.com/macros/s/AKfycbyQbfDo8D5U0Spcf4xH9Fbf4jJIR-ZqNDQrTTbWHDJucp5xLiycK4UQcntcOOH0WuJZQA/exec";
+const PAINEL_SENHA = "cayan244.";
+
 const $=s=>document.querySelector(s),brl=v=>"R$ "+Number(v||0).toFixed(2).replace(".",",");
-let cfg=JSON.parse(localStorage.getItem("bro_admin")||"null"),tab="a",dados=[],ult=null,ctx;
+let cfg=(PAINEL_URL&&PAINEL_SENHA)?{url:PAINEL_URL,key:PAINEL_SENHA}:JSON.parse(localStorage.getItem("bro_admin")||"null"),tab="a",dados=[],ult=null,ctx;
 const PROX={Novo:"Em preparo","Em preparo":"Saiu para entrega","Saiu para entrega":"Entregue"};
 const MSG={"Em preparo":"já estamos preparando seu pedido 🍔","Saiu para entrega":"seu pedido saiu para entrega 🛵","Entregue":"pedido entregue. Obrigado e bom apetite! 🙌","Cancelado":"infelizmente precisamos cancelar seu pedido. Vamos conversar por aqui.","Novo":"recebemos seu pedido ✅"};
 function beep(){try{ctx=ctx||new AudioContext();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=600;g.gain.setValueAtTime(0.15,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.4);o.start();o.stop(ctx.currentTime+.4)}catch(e){}}
