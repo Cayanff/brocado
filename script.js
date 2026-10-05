@@ -3,15 +3,24 @@
    ===================================================================== */
 const CONFIG = {
   nome: "BROCADO",
-  whatsapp: "5500000000000",      // ← SEU NÚMERO: 55 + DDD + número, só dígitos
-  instagram: "brocado",           // ← seu @ do Instagram, sem o @
+  whatsapp: "5599985583929",      // ← SEU NÚMERO: 55 + DDD + número, só dígitos
+  instagram: "brocadoburgers",           // ← seu @ do Instagram, sem o @
   painelUrl: "",                  // ← link do painel de pedidos (Apps Script). Vazio = só WhatsApp
   pedidoMinimo: 0,                // ← 0 = sem mínimo (subtotal em reais)
   taxaEntrega: 0,                 // ← taxa padrão (usada se não houver bairros)
   // Taxa por bairro. Se a lista estiver vazia, usa taxaEntrega.
   bairros: [
-    { nome: "Centro", taxa: 0 },
-    { nome: "Outro bairro (combinar)", taxa: 0 },
+    { nome: "Centro", taxa: 5 },
+    { nome: "Trizidela", taxa: 6 },
+    { nome: "Mariol", taxa: 7 },
+    { nome: "Areal", taxa: 6 },
+    { nome: "Bairro Novo", taxa: 7 },
+    { nome: "Marajá", taxa: 8 },
+    { nome: "R. Eco Marajá", taxa: 9 },
+    { nome: "Palmeira torta", taxa: 6 },
+    { nome: "R. Dom Reinaldo", taxa: 7 },
+    { nome: "Cohab", taxa: 5 },
+    { nome: "Mocó", taxa: 7 },
   ],
   // Horário: 0=domingo ... 6=sábado. [abre, fecha] ou null = fechado. Fecha após meia-noite? ex: ["18:00","01:00"]
   horarios: {
