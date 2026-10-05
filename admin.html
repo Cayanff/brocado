@@ -3,7 +3,7 @@
 <title>BROCADO — Painel</title>
 <style>
 *{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#f1e6c4;color:#15110d;padding-bottom:40px}
-     [hidden]{display:none!important}
+[hidden]{display:none!important}
 header{position:sticky;top:0;background:#15110d;color:#f1e6c4;padding:12px 14px;display:flex;gap:10px;align-items:center;border-bottom:4px solid #e2402a;z-index:5}
 header b{font:1.2rem Georgia,serif;letter-spacing:.06em;margin-right:auto}
 button,input{font:inherit}
@@ -20,6 +20,10 @@ button,input{font:inherit}
 .st.Novo{background:#e2402a}.st.Entregue{background:#1f7a45}.st.Cancelado{background:#777}
 pre{white-space:pre-wrap;font:inherit;margin:8px 0;padding:8px;border:2px dashed #15110d}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.acts .b{flex:1;min-width:120px}
+.etapas{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.etapas .e{flex:1;min-width:72px;border:2px solid #15110d;background:#fffaf0;border-radius:2px;padding:8px 4px;font-size:.72rem;font-weight:700;cursor:pointer}
+.etapas .e.on{background:#15110d;color:#f1e6c4;cursor:default}
+.etapas .e:disabled{opacity:1}
 .erro{color:#c62828;font-weight:700}
 </style></head><body>
 <header><b>BROCADO · PEDIDOS</b><button class="b" id="sair" hidden>Sair</button></header>
@@ -34,14 +38,12 @@ pre{white-space:pre-wrap;font:inherit;margin:8px 0;padding:8px;border:2px dashed
   <div class="tot" id="tot"></div><div id="lista"></div>
 </div>
 <script>
-/* Preencha aqui para o painel abrir direto, sem tela de login.
-   Deixe "" nos dois para voltar a pedir link e senha toda vez. */
 const PAINEL_URL = "https://script.google.com/macros/s/AKfycbyQbfDo8D5U0Spcf4xH9Fbf4jJIR-ZqNDQrTTbWHDJucp5xLiycK4UQcntcOOH0WuJZQA/exec";
 const PAINEL_SENHA = "cayan244.";
 
 const $=s=>document.querySelector(s),brl=v=>"R$ "+Number(v||0).toFixed(2).replace(".",",");
 let cfg=(PAINEL_URL&&PAINEL_SENHA)?{url:PAINEL_URL,key:PAINEL_SENHA}:JSON.parse(localStorage.getItem("bro_admin")||"null"),tab="a",dados=[],ult=null,ctx;
-const PROX={Novo:"Em preparo","Em preparo":"Saiu para entrega","Saiu para entrega":"Entregue"};
+const ETAPAS=["Novo","Em preparo","Saiu para entrega","Entregue"];
 const MSG={"Em preparo":"já estamos preparando seu pedido 🍔","Saiu para entrega":"seu pedido saiu para entrega 🛵","Entregue":"pedido entregue. Obrigado e bom apetite! 🙌","Cancelado":"infelizmente precisamos cancelar seu pedido. Vamos conversar por aqui.","Novo":"recebemos seu pedido ✅"};
 function beep(){try{ctx=ctx||new AudioContext();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=600;g.gain.setValueAtTime(0.15,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.4);o.start();o.stop(ctx.currentTime+.4)}catch(e){}}
 async function api(q){const r=await fetch(cfg.url+"?key="+encodeURIComponent(cfg.key)+q);return r.json()}
@@ -59,15 +61,16 @@ function render(){
   $("#lista").innerHTML=l.map(p=>`<div class="card"><h3><span>#${p.n} ${p.nome}</span><span>${brl(p.total)}</span></h3>
     <span class="st ${p.status}">${p.status}</span> <small>${new Date(p.data).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · ${p.tipo}</small>
     <pre>${p.itens}</pre><div>💳 ${p.pag}${p.end?`<br>📍 ${p.end}`:""}${p.obs?`<br>📝 ${p.obs}`:""}</div>
-    <div class="acts">${PROX[p.status]?`<button class="b p" data-id="${p.n}" data-s="${PROX[p.status]}">→ ${PROX[p.status]}</button>`:""}
-    <button class="b" data-wa="${p.n}">💬 Avisar cliente</button>
+    <div class="etapas">${ETAPAS.map(e=>`<button class="e ${e===p.status?"on":""}" data-id="${p.n}" data-s="${e}" ${e===p.status?"disabled":""}>${e}</button>`).join("")}</div>
+    <div class="acts"><button class="b" data-wa="${p.n}">💬 Avisar cliente</button>
     ${["Entregue","Cancelado"].includes(p.status)?"":`<button class="b" data-id="${p.n}" data-s="Cancelado">Cancelar</button>`}</div></div>`).join("")||'<p style="padding:20px">Nenhum pedido por aqui.</p>';
 }
 $("#lista").addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.wa){const p=dados.find(x=>x.n==b.dataset.wa);let t=p.tel.replace(/\D/g,"");if(t.length<=11)t="55"+t;
     open(`https://wa.me/${t}?text=`+encodeURIComponent(`Olá, ${p.nome}! Pedido #${p.n} BROCADO: ${MSG[p.status]}`),"_blank");return}
-  b.disabled=true;await api(`&acao=status&id=${b.dataset.id}&status=${encodeURIComponent(b.dataset.s)}`);carregar();
+  const p=dados.find(x=>x.n==b.dataset.id);if(p)p.status=b.dataset.s;render();
+  api(`&acao=status&id=${b.dataset.id}&status=${encodeURIComponent(b.dataset.s)}`);
 });
 document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===b));render()});
 $("#ref").onclick=carregar;
