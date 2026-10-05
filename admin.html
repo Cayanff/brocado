@@ -37,7 +37,7 @@ const $=s=>document.querySelector(s),brl=v=>"R$ "+Number(v||0).toFixed(2).replac
 let cfg=JSON.parse(localStorage.getItem("bro_admin")||"null"),tab="a",dados=[],ult=null,ctx;
 const PROX={Novo:"Em preparo","Em preparo":"Saiu para entrega","Saiu para entrega":"Entregue"};
 const MSG={"Em preparo":"já estamos preparando seu pedido 🍔","Saiu para entrega":"seu pedido saiu para entrega 🛵","Entregue":"pedido entregue. Obrigado e bom apetite! 🙌","Cancelado":"infelizmente precisamos cancelar seu pedido. Vamos conversar por aqui.","Novo":"recebemos seu pedido ✅"};
-function beep(){try{ctx=ctx||new AudioContext();[0,.25,.5].forEach(t=>{const o=ctx.createOscillator();o.connect(ctx.destination);o.frequency.value=880;o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15)})}catch(e){}}
+function beep(){try{ctx=ctx||new AudioContext();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=600;g.gain.setValueAtTime(0.15,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.4);o.start();o.stop(ctx.currentTime+.4)}catch(e){}}
 async function api(q){const r=await fetch(cfg.url+"?key="+encodeURIComponent(cfg.key)+q);return r.json()}
 async function carregar(){
   try{const j=await api("");
