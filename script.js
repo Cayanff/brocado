@@ -5,6 +5,8 @@ const CONFIG = {
   nome: "SERTÃO GRILL",
   whatsapp: "5599985583929",      // ← SEU NÚMERO: 55 + DDD + número, só dígitos
   instagram: "brocadoburgers",           // ← seu @ do Instagram, sem o @
+  endereco: "",                   // ← endereço da loja (aparece no topo e em Informações). Vazio = não mostra
+  tempoEntrega: "",               // ← ex.: "30 - 40 min". Vazio = não mostra
   painelUrl: "https://script.google.com/macros/s/AKfycbyQbfDo8D5U0Spcf4xH9Fbf4jJIR-ZqNDQrTTbWHDJucp5xLiycK4UQcntcOOH0WuJZQA/exec",                  // ← link do painel de pedidos (Apps Script). Vazio = só WhatsApp
   pedidoMinimo: 15,                // ← 0 = sem mínimo (subtotal em reais)
   taxaEntrega: 0,                 // ← taxa padrão (usada se não houver bairros)
@@ -102,7 +104,7 @@ const TIPO_IMG = { hamburgueres: "hamb", combos: "hamb", especiais: "hamb", acom
 const demo = (cat) => XILO(TIPO_IMG[cat]);
 
 let cart = JSON.parse(localStorage.getItem("brocado_cart") || "[]");
-let catAtual = "todas", busca = "", cupomAtivo = null, pendente = null;
+let busca = "", cupomAtivo = null, pendente = null;
 
 /* ---------- links e status ---------- */
 const waBase = "https://wa.me/" + CONFIG.whatsapp;
@@ -118,45 +120,99 @@ function aberto() {
   return false;
 }
 function atualizaStatus() {
-  const s = $("#status"), on = aberto();
-  s.textContent = on ? "Aberto" : "Fechado";
-  s.className = "status " + (on ? "on" : "off");
-  const h = CONFIG.horarios[new Date().getDay()];
-  s.title = h ? `Hoje: ${h[0]} às ${h[1]}` : "Fechado hoje";
+  const on = aberto();
+  $("#statusBox").className = "status-box " + (on ? "on" : "off");
+  $("#statusTxt").textContent = on ? "Aberto" : "Fechado";
+  $("#statusSub").textContent = on
+    ? (CONFIG.tempoEntrega ? "Entrega " + CONFIG.tempoEntrega : "Recebendo pedidos")
+    : (CONFIG.bloquearQuandoFechado ? "Pedidos indisponíveis" : "Pode pedir para depois");
 }
-// Horários no rodapé
-const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-$("#horarios").innerHTML = DIAS.map((d, i) => `<span>${d}: ${CONFIG.horarios[i] ? CONFIG.horarios[i][0] + "–" + CONFIG.horarios[i][1] : "fechado"}</span>`).join("");
 atualizaStatus(); setInterval(atualizaStatus, 60000);
 
+/* ---------- cabeçalho da loja e informações ---------- */
+const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+$("#storeName").textContent = CONFIG.nome;
+const metas = [];
+if (CONFIG.endereco) metas.push(`📍 ${CONFIG.endereco}`);
+if (CONFIG.tempoEntrega) metas.push(`🕒 Entrega <b>${CONFIG.tempoEntrega}</b>`);
+if (CONFIG.pedidoMinimo > 0) metas.push(`Pedido mínimo <b>${brl(CONFIG.pedidoMinimo)}</b>`);
+$("#storeMeta").innerHTML = metas.map((m) => `<p>${m}</p>`).join("");
+
+$("#infoBody").innerHTML =
+  (CONFIG.endereco ? `<h3>Endereço</h3><p class="info-p">${CONFIG.endereco}</p>` : "") +
+  `<h3>Horário de funcionamento</h3><div class="info-list">` +
+  DIAS.map((d, i) => `<div><span>${d}</span><b>${CONFIG.horarios[i] ? CONFIG.horarios[i][0] + " – " + CONFIG.horarios[i][1] : "Fechado"}</b></div>`).join("") + `</div>` +
+  (CONFIG.bairros.length ? `<h3>Taxa de entrega</h3><div class="info-list">` +
+    CONFIG.bairros.map((x) => `<div><span>${x.nome}</span><b>${x.taxa > 0 ? brl(x.taxa) : "Grátis"}</b></div>`).join("") + `</div>` : "") +
+  `<h3>Pagamento</h3><p class="info-p">${CONFIG.pagamentos.join(" · ")}</p>` +
+  (CONFIG.pedidoMinimo > 0 ? `<h3>Pedido mínimo</h3><p class="info-p">${brl(CONFIG.pedidoMinimo)}</p>` : "");
+$("#btnInfo").addEventListener("click", () => { $("#infoWrap").hidden = false; });
+
 /* ---------- cardápio ---------- */
+let travaSpy = false, abaAtual = null;
+
 function renderCats() {
-  const lista = [{ id: "todas", nome: "Todos" }, ...CATEGORIAS];
-  $("#cats").innerHTML = lista.map((c) => `<button class="chip ${c.id === catAtual ? "on" : ""}" data-cat="${c.id}">${c.nome}</button>`).join("");
+  $("#cats").innerHTML = CATEGORIAS.map((c, i) => `<button class="tab ${i === 0 ? "on" : ""}" data-cat="${c.id}">${c.nome}</button>`).join("");
+  $("#catLista").innerHTML = CATEGORIAS.map((c) => `<button class="cat-opt" data-cat="${c.id}">${c.nome}</button>`).join("");
 }
 function renderLista() {
   const q = busca.trim().toLowerCase();
   let html = "";
   CATEGORIAS.forEach((c) => {
-    if (catAtual !== "todas" && catAtual !== c.id) return;
     const ps = PRODUTOS.filter((p) => p.cat === c.id && (!q || (p.nome + " " + p.desc).toLowerCase().includes(q)));
     if (!ps.length) return;
     html += `<section class="sec" id="cat-${c.id}"><h2>${c.nome}</h2><div class="grid">` + ps.map(cardHtml).join("") + `</div></section>`;
   });
   $("#lista").innerHTML = html || `<p class="vazio">Nada encontrado. Tente outra busca.</p>`;
+  abaAtual = null; marcaAba();
 }
 function cardHtml(p) {
-  const foto = `<img class="ft" src="${p.foto || demo(p.cat)}" alt="${p.nome}" loading="lazy" width="118" height="118" onerror="this.onerror=null;this.src=demo('${p.cat}')">`;
-  return `<article class="card ${p.emBreve ? "em-breve" : ""}">
-    <div><h3>${p.nome}</h3><p>${p.desc}</p><span class="preco">${precoTxt(p.preco)}</span></div>${foto}
-    ${p.emBreve ? "" : `<button class="add" data-add="${p.id}">Adicionar</button>`}</article>`;
+  const img = `<img src="${p.foto || demo(p.cat)}" alt="${p.nome}" loading="lazy" width="112" height="112" onerror="this.onerror=null;this.src=demo('${p.cat}')">`;
+  return `<article class="item ${p.emBreve ? "em-breve" : ""}">
+    <div class="item-txt"><h3>${p.nome}</h3><p>${p.desc}</p><span class="preco">${precoTxt(p.preco)}</span></div>
+    <div class="item-img">${img}${p.emBreve ? "" : `<button class="plus" data-add="${p.id}" aria-label="Adicionar ${p.nome}">+</button>`}</div>
+  </article>`;
 }
-$("#cats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (!b) return; catAtual = b.dataset.cat; renderCats(); renderLista(); });
+
+/* abas: clicar rola até a categoria; ao rolar, a aba acompanha */
+function setAba(id) {
+  document.querySelectorAll("#cats .tab").forEach((t) => t.classList.toggle("on", t.dataset.cat === id));
+  const t = document.querySelector(`#cats .tab[data-cat="${id}"]`), box = $("#cats");
+  if (t) box.scrollTo({ left: t.offsetLeft - (box.clientWidth - t.clientWidth) / 2, behavior: "smooth" });
+}
+function irPara(id) {
+  const sec = document.getElementById("cat-" + id); if (!sec) return;
+  const y = sec.getBoundingClientRect().top + window.scrollY - $(".tabbar").offsetHeight - 6;
+  travaSpy = true; abaAtual = id; setAba(id);
+  window.scrollTo({ top: y, behavior: "smooth" });
+  setTimeout(() => { travaSpy = false; }, 700);
+}
+function marcaAba() {
+  if (travaSpy) return;
+  const topo = $(".tabbar").offsetHeight + 20;
+  let atual = null;
+  document.querySelectorAll(".sec").forEach((s) => { if (s.getBoundingClientRect().top <= topo) atual = s.id.slice(4); });
+  if (!atual) { const p = document.querySelector(".sec"); atual = p ? p.id.slice(4) : null; }
+  if (atual && atual !== abaAtual) { abaAtual = atual; setAba(atual); }
+}
+window.addEventListener("scroll", () => requestAnimationFrame(marcaAba), { passive: true });
+
+$("#cats").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (b) irPara(b.dataset.cat); });
+$("#catLista").addEventListener("click", (e) => { const b = e.target.closest("[data-cat]"); if (!b) return; $("#catWrap").hidden = true; irPara(b.dataset.cat); });
+$("#btnMenu").addEventListener("click", () => { $("#catWrap").hidden = false; });
+$("#btnBusca").addEventListener("click", () => {
+  const r = $("#buscaRow"); r.hidden = !r.hidden;
+  if (!r.hidden) $("#busca").focus(); else { $("#busca").value = ""; busca = ""; renderLista(); }
+});
 $("#busca").addEventListener("input", (e) => { busca = e.target.value; renderLista(); });
 $("#lista").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-add]"); if (!b) return;
-  const p = PRODUTOS.find((x) => x.id == b.dataset.add);
-  p.adicionais && ADICIONAIS.length ? abrirExtras(p) : addCarrinho(p, []);
+  const b = e.target.closest("[data-add]");
+  if (b) {
+    const p = PRODUTOS.find((x) => x.id == b.dataset.add);
+    p.adicionais && ADICIONAIS.length ? abrirExtras(p) : addCarrinho(p, []);
+    return;
+  }
+  const t = e.target.closest(".item-txt p"); if (t) t.classList.toggle("open"); // toque na descrição: abre/fecha
 });
 
 /* ---------- adicionais ---------- */
@@ -278,6 +334,3 @@ $("#finalizar").addEventListener("click", async () => {
 try { const c = JSON.parse(localStorage.getItem("brocado_cli") || "{}"); $("#nome").value = c.nome || ""; $("#tel").value = c.tel || ""; $("#endereco").value = c.endereco || ""; if (c.bairro) $("#bairro").value = c.bairro; } catch (e) {}
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
 renderCats(); renderLista(); atualizaBarra();
-
-// Garante a arte de demonstração no banner caso a foto ainda não exista
-(() => { const h = document.querySelector("img.hero-img"); if (h && h.complete && h.naturalWidth === 0) { h.src = XILO("hamb", 1); h.style.objectFit = "contain"; } })();
